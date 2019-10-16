@@ -40,7 +40,7 @@ class Augmenter():
         for sentence in self._parsed_scheme.transitory:
             self._generate_deque_component(sentence)
         if self._augment_req <= len(self._deque):
-            for _ in range(self._augment_required):
+            for _ in range(self._augment_req):
                 result.batch.append(self._deque.popleft())
         else:
             remaining_n_augments = (self._augment_req - len(self._deque))
