@@ -15,13 +15,11 @@ class Augmenter():
         self.originals = originals
         self.scheme = scheme
         self._parsed_scheme = scheme.parse()
-        #_adapter = _Adapter()
         
         self.augments = {}
         for f in scheme.augments:
             _adapter = _Adapter(f)
             self.augments[f.__name__] =  _adapter()
-        #self.augments = {f.__name__ : _adapter(f) for f in scheme.augments}
         self._augment_req = augment_req
         self._aug_im_batches = Aug_Im_Batches()
         self._deque = Deque()
@@ -60,8 +58,6 @@ class Augmenter():
         return result
                 
     def _generate_deque_component(self, sentence):
-        '''import ipdb
-        ipdb.set_trace()'''
         for aug_im in self._deque[sentence['take']][sentence['pick']]:
             for augment_name in sentence['apply']:
                 new_component = self.augments[augment_name](aug_im)
