@@ -2,8 +2,8 @@
 
 #print(__file__)
 #print(__path__)
-import tensorflow as _tf
-_tf.enable_eager_execution()
+from tensorflow import enable_eager_execution as _eee
+_eee()
 
 from ._core.data.Input_Data_Formatter import Input_Data_Formatter
 

@@ -1,3 +1,7 @@
+#from memory_profiler import profile
+import gc
+#import time
+
 from .data.types import *
 from .data.Aug_Im_Adapter import Aug_Im_Adapter as _Adapter
 from .scheme.Augment_Scheme import Augment_Scheme
@@ -7,31 +11,34 @@ IDF = Input_Data_Formatter()
 
 import tensorflow as _tf
 
+
 class Augmenter():
-    def __call__(self, originals = IDF.get_results(),
-                 scheme = Augment_Scheme(), augment_req = 100):
-        '''import ipdb
-        ipdb.set_trace()'''
+    #@profile
+    def __init__(self, originals = IDF.get_results(),
+                 scheme = 'default', augment_req = 100):
         self.originals = originals
-        self.scheme = scheme
-        self._parsed_scheme = scheme.parse()
+        if scheme == 'default':
+            self.scheme = Augment_Scheme()
+        else:
+            self.scheme = scheme
         
         self.augments = {}
-        for f in scheme.augments:
+        for f in self.scheme.augments:
             _adapter = _Adapter(f)
             self.augments[f.__name__] =  _adapter()
         self._augment_req = augment_req
-        self._aug_im_batches = Aug_Im_Batches()
         self._deque = Deque()
         
-        self.augment()
-        
-        return self._aug_im_batches
-    
+   #@profile
     def augment(self):
+        result = Aug_Im_Batches()
+        self._parsed_scheme = self.scheme.parse()
         for original in self.originals.batch:
-            self._aug_im_batches.batches.append(self._augment(original))
+            result.batches.append(self._augment(original))
+        gc.collect()
+        return result
     
+    #@profile
     def _augment(self, original):
         result = Aug_Im_Batch(original.Id)
         self._deque.append(original)
@@ -56,13 +63,13 @@ class Augmenter():
             for _ in range(len(self._deque)):
                 result.batch.append(self._deque.popleft())
         return result
-                
+    #@profile            
     def _generate_deque_component(self, sentence):
         for aug_im in self._deque[sentence['take']][sentence['pick']]:
             for augment_name in sentence['apply']:
                 new_component = self.augments[augment_name](aug_im)
                 self._deque.append(new_component)
-                
+    #@profile            
     def _apply_stable(self, working_im, how_many = 'all'):
         if how_many == 'all':
             augment_names = self._parsed_scheme.stable
@@ -70,5 +77,6 @@ class Augmenter():
             augment_names = self._parsed_scheme.stable[:how_many]
             
         for augment_name in augment_names:
-                new_component = self.augments[augment_name](working_im)
-                self._deque.append(new_component)
+            new_component = self.augments[augment_name](working_im)
+            self._deque.append(new_component)
+        #gc.collect()
